@@ -1,0 +1,10 @@
+{
+  "description": "Navigate a 2D office map with avatars while experiencing immersive spatial audio, enhancing virtual collaboration for remote teams in a playful, modern environment.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
