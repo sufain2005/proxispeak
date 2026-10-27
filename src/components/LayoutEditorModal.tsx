@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { Icon } from './Icons';
-import type { RoomLayout } from '../services/webrtcService';
+import React, { useState } from "react"
+import { Icon } from "./Icons"
+import type { RoomLayout } from "../services/webrtcService"
 
 interface LayoutEditorModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  layout: RoomLayout;
-  onSaveLayout: (newLayout: RoomLayout) => Promise<void>;
-  onResetLayout: () => Promise<void>;
+  isOpen: boolean
+  onClose: () => void
+  layout: RoomLayout
+  onSaveLayout: (newLayout: RoomLayout) => Promise<void>
+  onResetLayout: () => Promise<void>
 }
 
-type PaletteItemType = 'solid' | 'glass' | 'wall-v' | 'wall-h' | 'desk-cluster' | 'sofa' | 'plant';
+type PaletteItemType = "solid" | "glass" | "wall-v" | "wall-h" | "desk-cluster" | "sofa" | "plant"
 
 export default function LayoutEditorModal({
   isOpen,
@@ -19,111 +19,121 @@ export default function LayoutEditorModal({
   onSaveLayout,
   onResetLayout,
 }: LayoutEditorModalProps) {
-  const [currentLayout, setCurrentLayout] = useState<RoomLayout>(layout);
-  const [selectedTool, setSelectedTool] = useState<PaletteItemType>('solid');
-  const [snapGrid, setSnapGrid] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [currentLayout, setCurrentLayout] = useState<RoomLayout>(layout)
+  const [selectedTool, setSelectedTool] = useState<PaletteItemType>("solid")
+  const [snapGrid, setSnapGrid] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<string | null>(null)
 
   React.useEffect(() => {
-    setCurrentLayout(layout);
-  }, [layout]);
+    setCurrentLayout(layout)
+  }, [layout])
 
   React.useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) return
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+      if (e.key === "Escape") onClose()
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isOpen, onClose])
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   const handleGridClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    let x = ((e.clientX - rect.left) / rect.width) * 100;
-    let y = ((e.clientY - rect.top) / rect.height) * 100;
+    const rect = e.currentTarget.getBoundingClientRect()
+    let x = ((e.clientX - rect.left) / rect.width) * 100
+    let y = ((e.clientY - rect.top) / rect.height) * 100
 
     if (snapGrid) {
-      x = Math.round(x / 4) * 4;
-      y = Math.round(y / 4) * 4;
+      x = Math.round(x / 4) * 4
+      y = Math.round(y / 4) * 4
     }
 
-    if (selectedTool === 'solid' || selectedTool === 'glass' || selectedTool === 'wall-h' || selectedTool === 'wall-v') {
-      const isVertical = selectedTool === 'wall-v';
-      const isGlass = selectedTool === 'glass';
+    if (
+      selectedTool === "solid" ||
+      selectedTool === "glass" ||
+      selectedTool === "wall-h" ||
+      selectedTool === "wall-v"
+    ) {
+      const isVertical = selectedTool === "wall-v"
+      const isGlass = selectedTool === "glass"
       const newWall = {
         id: `wall-${Date.now()}`,
         x: Math.max(5, Math.min(90, x)),
         y: Math.max(5, Math.min(90, y)),
         width: isVertical ? 0.8 : 20,
         height: isVertical ? 20 : 0.8,
-        type: isGlass ? 'glass' : selectedTool,
-      };
+        type: isGlass ? "glass" : selectedTool,
+      }
 
       setCurrentLayout((prev) => ({
         ...prev,
         walls: [...prev.walls, newWall],
-      }));
+      }))
     } else {
       const newFurniture = {
         id: `item-${Date.now()}`,
         type: selectedTool,
         x: Math.max(5, Math.min(90, x)),
         y: Math.max(5, Math.min(90, y)),
-        label: selectedTool === 'desk-cluster' ? 'Desk Cluster' : selectedTool === 'sofa' ? 'Lounge Sofa' : 'Green Plant',
-      };
+        label:
+          selectedTool === "desk-cluster"
+            ? "Desk Cluster"
+            : selectedTool === "sofa"
+              ? "Lounge Sofa"
+              : "Green Plant",
+      }
 
       setCurrentLayout((prev) => ({
         ...prev,
         furniture: [...prev.furniture, newFurniture],
-      }));
+      }))
     }
-  };
+  }
 
   const removeWall = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation()
     setCurrentLayout((prev) => ({
       ...prev,
       walls: prev.walls.filter((w) => w.id !== id),
-    }));
-  };
+    }))
+  }
 
   const removeFurniture = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation()
     setCurrentLayout((prev) => ({
       ...prev,
       furniture: prev.furniture.filter((f) => f.id !== id),
-    }));
-  };
+    }))
+  }
 
   const handleSave = async () => {
-    setIsSaving(true);
-    setSaveStatus(null);
+    setIsSaving(true)
+    setSaveStatus(null)
     try {
-      await onSaveLayout(currentLayout);
-      setSaveStatus('Saved to Database!');
-      setTimeout(() => setSaveStatus(null), 3500);
+      await onSaveLayout(currentLayout)
+      setSaveStatus("Saved to Database!")
+      setTimeout(() => setSaveStatus(null), 3500)
     } catch (err) {
-      setSaveStatus('Failed to save layout');
+      setSaveStatus("Failed to save layout")
     } finally {
-      setIsSaving(false);
+      setIsSaving(false)
     }
-  };
+  }
 
   const handleReset = async () => {
-    setIsSaving(true);
+    setIsSaving(true)
     try {
-      await onResetLayout();
-      setSaveStatus('Reset to default');
-      setTimeout(() => setSaveStatus(null), 2500);
+      await onResetLayout()
+      setSaveStatus("Reset to default")
+      setTimeout(() => setSaveStatus(null), 2500)
     } catch (err) {
-      setSaveStatus('Failed to reset');
+      setSaveStatus("Failed to reset")
     } finally {
-      setIsSaving(false);
+      setIsSaving(false)
     }
-  };
+  }
 
   return (
     <div
@@ -132,7 +142,7 @@ export default function LayoutEditorModal({
       aria-modal="true"
       aria-labelledby="editor-title"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) onClose()
       }}
     >
       <section className="editor-modal">
@@ -140,9 +150,16 @@ export default function LayoutEditorModal({
           <div>
             <span className="eyebrow">WORKSPACE TOOLS</span>
             <h2 id="editor-title">Interactive Room Layout Editor</h2>
-            <p>Select an architectural element on the left, then click on the grid to place it. Click placed items to remove.</p>
+            <p>
+              Select an architectural element on the left, then click on the
+              grid to place it. Click placed items to remove.
+            </p>
           </div>
-          <button className="close-button" onClick={onClose} aria-label="Close editor">
+          <button
+            className="close-button"
+            onClick={onClose}
+            aria-label="Close editor"
+          >
             <Icon name="x" size={18} />
           </button>
         </header>
@@ -153,8 +170,10 @@ export default function LayoutEditorModal({
 
             <button
               type="button"
-              className={`palette-item ${selectedTool === 'solid' ? 'selected' : ''}`}
-              onClick={() => setSelectedTool('solid')}
+              className={`palette-item ${
+                selectedTool === "solid" ? "selected" : ""
+              }`}
+              onClick={() => setSelectedTool("solid")}
             >
               <i className="wall-icon" />
               <span>
@@ -165,8 +184,10 @@ export default function LayoutEditorModal({
 
             <button
               type="button"
-              className={`palette-item ${selectedTool === 'glass' ? 'selected' : ''}`}
-              onClick={() => setSelectedTool('glass')}
+              className={`palette-item ${
+                selectedTool === "glass" ? "selected" : ""
+              }`}
+              onClick={() => setSelectedTool("glass")}
             >
               <i className="glass-icon" />
               <span>
@@ -177,8 +198,10 @@ export default function LayoutEditorModal({
 
             <button
               type="button"
-              className={`palette-item ${selectedTool === 'desk-cluster' ? 'selected' : ''}`}
-              onClick={() => setSelectedTool('desk-cluster')}
+              className={`palette-item ${
+                selectedTool === "desk-cluster" ? "selected" : ""
+              }`}
+              onClick={() => setSelectedTool("desk-cluster")}
             >
               <i className="desk-icon" />
               <span>
@@ -189,8 +212,10 @@ export default function LayoutEditorModal({
 
             <button
               type="button"
-              className={`palette-item ${selectedTool === 'sofa' ? 'selected' : ''}`}
-              onClick={() => setSelectedTool('sofa')}
+              className={`palette-item ${
+                selectedTool === "sofa" ? "selected" : ""
+              }`}
+              onClick={() => setSelectedTool("sofa")}
             >
               <i className="sofa-icon" />
               <span>
@@ -201,8 +226,10 @@ export default function LayoutEditorModal({
 
             <button
               type="button"
-              className={`palette-item ${selectedTool === 'plant' ? 'selected' : ''}`}
-              onClick={() => setSelectedTool('plant')}
+              className={`palette-item ${
+                selectedTool === "plant" ? "selected" : ""
+              }`}
+              onClick={() => setSelectedTool("plant")}
             >
               <i className="plant-icon">✦</i>
               <span>
@@ -215,7 +242,7 @@ export default function LayoutEditorModal({
               <span>Snap to grid</span>
               <button
                 type="button"
-                className={`toggle ${snapGrid ? 'on' : ''}`}
+                className={`toggle ${snapGrid ? "on" : ""}`}
                 onClick={() => setSnapGrid(!snapGrid)}
                 aria-pressed={snapGrid}
               >
@@ -225,11 +252,19 @@ export default function LayoutEditorModal({
 
             <div className="editor-stats-hint">
               <small>Click placed elements to delete them.</small>
-              <small>Walls: {currentLayout.walls.length} | Items: {currentLayout.furniture.length}</small>
+              <small>
+                Walls: {currentLayout.walls.length} | Items:{" "}
+                {currentLayout.furniture.length}
+              </small>
             </div>
           </aside>
 
-          <div className="editor-grid" onClick={handleGridClick} role="region" aria-label="Floor plan grid">
+          <div
+            className="editor-grid"
+            onClick={handleGridClick}
+            role="region"
+            aria-label="Floor plan grid"
+          >
             {/* Visual boundary walls */}
             <div className="placed-wall wall-one" />
             <div className="placed-wall wall-two" />
@@ -265,29 +300,48 @@ export default function LayoutEditorModal({
                 onClick={(e) => removeFurniture(item.id, e)}
                 title={`Click to remove ${item.label || item.type}`}
               >
-                <span>{item.type === 'plant' ? '🌿' : item.type === 'sofa' ? '🛋️' : '🖥️'}</span>
+                <span>
+                  {item.type === "plant"
+                    ? "🌿"
+                    : item.type === "sofa"
+                      ? "🛋️"
+                      : "🖥️"}
+                </span>
                 <span className="remove-tag">×</span>
               </div>
             ))}
 
-            <span className="grid-scale">1 square = 0.5m · Click anywhere to place</span>
+            <span className="grid-scale">
+              1 square = 0.5m · Click anywhere to place
+            </span>
           </div>
         </div>
 
         <footer>
-          <button type="button" className="reset-button" onClick={handleReset} disabled={isSaving}>
+          <button
+            type="button"
+            className="reset-button"
+            onClick={handleReset}
+            disabled={isSaving}
+          >
             Reset to Default
           </button>
           <div className="save-actions">
-            {saveStatus && <span className="save-status show">{saveStatus}</span>}
-            <button type="button" className="save-button" onClick={handleSave} disabled={isSaving}>
+            {saveStatus && (
+              <span className="save-status show">{saveStatus}</span>
+            )}
+            <button
+              type="button"
+              className="save-button"
+              onClick={handleSave}
+              disabled={isSaving}
+            >
               <Icon name="check" size={16} />
-              <span>{isSaving ? 'Syncing...' : 'Save Layout to Database'}</span>
+              <span>{isSaving ? "Syncing..." : "Save Layout to Database"}</span>
             </button>
           </div>
         </footer>
       </section>
     </div>
-  );
+  )
 }
-
